@@ -5,6 +5,14 @@
 
 export const controllers = {
   Dashboard: () => import('#controllers/dashboard_controller'),
+  Inventory: () => import('#controllers/inventory_controller'),
+  masterData: {
+    Categories: () => import('#controllers/master_data/categories_controller'),
+    Products: () => import('#controllers/master_data/products_controller'),
+    UserManagements: () => import('#controllers/master_data/user_managements_controller'),
+  },
   NewAccount: () => import('#controllers/new_account_controller'),
+  Profile: () => import('#controllers/profile_controller'),
+  Reports: () => import('#controllers/reports_controller'),
   Session: () => import('#controllers/session_controller'),
 }

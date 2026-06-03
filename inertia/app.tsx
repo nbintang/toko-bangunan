@@ -9,11 +9,16 @@ import { TuyauProvider } from '@adonisjs/inertia/react'
 import { resolvePageComponent } from '@adonisjs/inertia/helpers'
 import { TooltipProvider } from './components/ui/tooltip'
 import DashboardLayout from './layouts/dashboard-layout'
+import { AuthLayout } from './layouts/auth-layout'
 
 const appName = import.meta.env.VITE_APP_NAME || 'AdonisJS'
 function getLayout(name: string) {
   if (name === 'dashboard' || name.startsWith('dashboard/')) {
     return DashboardLayout
+  }
+
+  if(name === "auth" || name.startsWith("auth/")) {
+    return AuthLayout
   }
 
   return Layout

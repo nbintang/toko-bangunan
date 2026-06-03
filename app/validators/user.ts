@@ -16,3 +16,24 @@ export const signupValidator = vine.create({
     confirmationField: 'passwordConfirmation',
   }),
 })
+
+export const createUserManagementValidator = vine.create({
+  fullName: vine.string().trim().maxLength(255),
+  email: email().unique({ table: 'users', column: 'email' }),
+  password: vine.string().minLength(6).maxLength(32).confirmed({
+    confirmationField: 'passwordConfirmation',
+  }),
+})
+
+export const updateUserManagementValidator = vine.create({
+  fullName: vine.string().trim().maxLength(255),
+  email: email(),
+  password: vine
+    .string()
+    .minLength(6)
+    .maxLength(32)
+    .confirmed({
+      confirmationField: 'passwordConfirmation',
+    })
+    .optional(),
+})

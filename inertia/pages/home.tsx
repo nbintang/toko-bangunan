@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <>
       <Button asChild>
-        <Link href={'/auth/login'}>
+        <Link href="/dashboard/overview">
           <LogIn />
           Loginkan Bosku
         </Link>

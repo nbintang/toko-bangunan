@@ -15,7 +15,9 @@ declare module '@adonisjs/inertia/types' {
     'auth/login': ExtractProps<(typeof import('../../inertia/pages/auth/login.tsx'))['default']>
     'auth/signup': ExtractProps<(typeof import('../../inertia/pages/auth/signup.tsx'))['default']>
     'dashboard/inventory/index': ExtractProps<(typeof import('../../inertia/pages/dashboard/inventory/index.tsx'))['default']>
-    'dashboard/master-data/index': ExtractProps<(typeof import('../../inertia/pages/dashboard/master-data/index.tsx'))['default']>
+    'dashboard/master-data/categories/index': ExtractProps<(typeof import('../../inertia/pages/dashboard/master-data/categories/index.tsx'))['default']>
+    'dashboard/master-data/products/index': ExtractProps<(typeof import('../../inertia/pages/dashboard/master-data/products/index.tsx'))['default']>
+    'dashboard/master-data/users/index': ExtractProps<(typeof import('../../inertia/pages/dashboard/master-data/users/index.tsx'))['default']>
     'dashboard/overview': ExtractProps<(typeof import('../../inertia/pages/dashboard/overview.tsx'))['default']>
     'dashboard/profile/index': ExtractProps<(typeof import('../../inertia/pages/dashboard/profile/index.tsx'))['default']>
     'dashboard/reports/index': ExtractProps<(typeof import('../../inertia/pages/dashboard/reports/index.tsx'))['default']>

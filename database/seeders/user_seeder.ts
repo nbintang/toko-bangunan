@@ -1,16 +1,16 @@
 import User from '#models/user'
+import hash from '@adonisjs/core/services/hash'
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
 
 export default class extends BaseSeeder {
   async run() {
-    // Write your database queries inside the run method
     await User.updateOrCreate(
       {
-        email: 'Y7E0I@example.com',
+        email: 'admin@tokobangunan.test',
       },
       {
-        fullName: 'John Doe',
-        password: 'password',
+        fullName: 'Administrator',
+        password: await hash.make('password'),
       }
     )
   }

@@ -1,10 +1,11 @@
 import vine from '@vinejs/vine'
 
 export const createProductValidator = vine.create({
-  name: vine.string(),
-  code: vine.string().trim().minLength(3).maxLength(50).optional(),
-  unit: vine.string().trim().minLength(3).maxLength(50).optional(),
-  minimumStock: vine.number().min(0).optional(),
-  stock: vine.number().min(0).optional(),
-  categoryId: vine.number().positive().optional(),
+  categoryId: vine.number().positive(),
+  code: vine.string().trim().maxLength(255).unique({ table: 'products', column: 'code' }),
+  name: vine.string().trim().maxLength(255),
+  unit: vine.string().trim().maxLength(255),
+  stock: vine.number().min(0),
+  minimumStock: vine.number().min(0),
+  description: vine.string().trim().nullable().optional(),
 })

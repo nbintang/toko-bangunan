@@ -60,21 +60,6 @@ export function LoginForm({ className }: React.ComponentProps<'form'>) {
               {processing ? 'Logging in...' : 'Login'}
             </Button>
           </Field>
-
-          <FieldSeparator>Or continue with</FieldSeparator>
-
-          <Field>
-            <Button variant="outline" type="button">
-              Login with GitHub
-            </Button>
-
-            <FieldDescription className="text-center">
-              Don&apos;t have an account?{' '}
-              <a href="/auth/signup" className="underline underline-offset-4">
-                Sign up
-              </a>
-            </FieldDescription>
-          </Field>
         </FieldGroup>
       )}
     </Form>

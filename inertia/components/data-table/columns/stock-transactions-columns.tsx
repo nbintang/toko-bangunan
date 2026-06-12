@@ -59,8 +59,8 @@ export const stockTransactionsColumns: ColumnDef<StockTransaction>[] = [
 
       return (
         <div className="min-w-0">
-          <div className="truncate font-medium">{product?.name ?? '-'}</div>
-          <div className="truncate text-xs text-muted-foreground">{product?.code ?? '-'}</div>
+          <div className="font-medium">{product?.name ?? '-'}</div>
+          <div className="text-xs text-muted-foreground">{product?.code ?? '-'}</div>
         </div>
       )
     },

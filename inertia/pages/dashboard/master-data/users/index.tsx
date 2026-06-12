@@ -27,7 +27,10 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SubmitButton } from '@/components/submit_button'
+import { PasswordInput } from '@/components/password_input'
 import type { InertiaProps } from '~/types'
+import type { PaginatedData } from '~/types/pagination'
 
 type UserForm = {
   fullName: string
@@ -37,7 +40,8 @@ type UserForm = {
 }
 
 type PageProps = InertiaProps<{
-  users: UserManagement[]
+  users: PaginatedData<UserManagement>
+  search?: string
 }>
 
 const emptyForm: UserForm = {
@@ -52,6 +56,7 @@ export default function UsersIndex({ users }: PageProps) {
   const [editUser, setEditUser] = React.useState<UserManagement | null>(null)
   const [deleteUser, setDeleteUser] = React.useState<UserManagement | null>(null)
   const [form, setForm] = React.useState<UserForm>(emptyForm)
+  const [submitting, setSubmitting] = React.useState(false)
 
   function openCreateDialog() {
     setForm(emptyForm)
@@ -70,17 +75,21 @@ export default function UsersIndex({ users }: PageProps) {
 
   function storeUser(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (submitting) return
+
+    setSubmitting(true)
 
     router.post('/dashboard/master-data/users', form, {
       preserveScroll: true,
       onSuccess: () => setCreateOpen(false),
+      onFinish: () => setSubmitting(false),
     })
   }
 
   function updateUser(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (!editUser) return
+    if (!editUser || submitting) return
 
     const payload: Partial<UserForm> = {
       fullName: form.fullName,
@@ -92,9 +101,12 @@ export default function UsersIndex({ users }: PageProps) {
       payload.passwordConfirmation = form.passwordConfirmation
     }
 
+    setSubmitting(true)
+
     router.patch(`/dashboard/master-data/users/${editUser.id}`, payload, {
       preserveScroll: true,
       onSuccess: () => setEditUser(null),
+      onFinish: () => setSubmitting(false),
     })
   }
 
@@ -123,22 +135,24 @@ export default function UsersIndex({ users }: PageProps) {
         </div>
         <Button onClick={openCreateDialog}>
           <PlusIcon data-icon="inline-start" />
-          Create
+          Buat
         </Button>
       </div>
 
-      <DataTable columns={columns} data={users} />
+      <DataTable columns={columns} data={users.data} pagination={users.meta} />
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Pengguna</DialogTitle>
+            <DialogTitle>Buat Pengguna</DialogTitle>
             <DialogDescription>Tambahkan akun pengguna baru.</DialogDescription>
           </DialogHeader>
           <form className="grid gap-4" onSubmit={storeUser}>
             <UserFields form={form} setForm={setForm} requirePassword />
             <DialogFooter>
-              <Button type="submit">Save</Button>
+              <SubmitButton loading={submitting} loadingText="Menyimpan...">
+                Save
+              </SubmitButton>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -153,7 +167,9 @@ export default function UsersIndex({ users }: PageProps) {
           <form className="grid gap-4" onSubmit={updateUser}>
             <UserFields form={form} setForm={setForm} />
             <DialogFooter>
-              <Button type="submit">Save changes</Button>
+              <SubmitButton loading={submitting} loadingText="Menyimpan...">
+                Save changes
+              </SubmitButton>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -164,7 +180,7 @@ export default function UsersIndex({ users }: PageProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus pengguna?</AlertDialogTitle>
             <AlertDialogDescription>
-              Akun "{deleteUser?.fullName ?? deleteUser?.email}" akan dihapus permanen.
+              Akun {deleteUser?.fullName ?? deleteUser?.email} akan dihapus permanen.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -194,6 +210,7 @@ function UserFields({
         <Label htmlFor="user-full-name">Nama</Label>
         <Input
           id="user-full-name"
+          placeholder="Masukkan nama lengkap"
           value={form.fullName}
           onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))}
           required
@@ -204,6 +221,7 @@ function UserFields({
         <Input
           id="user-email"
           type="email"
+          placeholder="nama@contoh.com"
           value={form.email}
           onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
           required
@@ -211,13 +229,12 @@ function UserFields({
       </div>
       <div className="grid gap-2">
         <Label htmlFor="user-password">Password</Label>
-        <Input
+        <PasswordInput
           id="user-password"
-          type="password"
           value={form.password}
           onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
           required={requirePassword}
-          placeholder={requirePassword ? undefined : 'Kosongkan jika tidak diubah'}
+          placeholder={requirePassword ? 'Masukkan password' : 'Kosongkan jika tidak diubah'}
         />
       </div>
       <div className="grid gap-2">
@@ -230,6 +247,7 @@ function UserFields({
             setForm((current) => ({ ...current, passwordConfirmation: event.target.value }))
           }
           required={requirePassword || Boolean(form.password)}
+          placeholder="Ulangi password"
         />
       </div>
     </div>

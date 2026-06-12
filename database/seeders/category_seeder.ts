@@ -24,6 +24,26 @@ export default class extends BaseSeeder {
         name: 'Lari dan Training',
         description: 'Perlengkapan lari, kardio, dan latihan harian.',
       },
+      {
+        name: 'Basket',
+        description: 'Bola, sepatu, jersey, ring, dan aksesori basket.',
+      },
+      {
+        name: 'Renang',
+        description: 'Perlengkapan renang untuk latihan dan kompetisi.',
+      },
+      {
+        name: 'Tenis',
+        description: 'Raket, bola, grip, dan perlengkapan tenis lapangan.',
+      },
+      {
+        name: 'Outdoor',
+        description: 'Peralatan hiking, camping, dan aktivitas luar ruang.',
+      },
+      {
+        name: 'Proteksi Olahraga',
+        description: 'Pelindung tubuh untuk olahraga kontak dan latihan intensif.',
+      },
     ]
 
     for (const category of categories) {

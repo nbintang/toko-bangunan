@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -26,6 +25,8 @@ import {
 } from '@/components/ui/sidebar'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SubmitButton } from '@/components/submit_button'
+import { PasswordInput } from '@/components/password_input'
 import { router, usePage } from '@inertiajs/react'
 import { ChevronsUpDownIcon, LogOutIcon, Settings, User } from 'lucide-react'
 import type { InertiaProps } from '~/types'
@@ -43,6 +44,7 @@ export function NavUser({
   const { errors } = usePage<InertiaProps>().props
   const displayName = user.fullName ?? user.email
   const [passwordOpen, setPasswordOpen] = React.useState(false)
+  const [passwordSubmitting, setPasswordSubmitting] = React.useState(false)
   const [passwordForm, setPasswordForm] = React.useState({
     currentPassword: '',
     password: '',
@@ -51,6 +53,9 @@ export function NavUser({
 
   function submitPassword(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (passwordSubmitting) return
+
+    setPasswordSubmitting(true)
 
     router.patch('/dashboard/profile/password', passwordForm, {
       preserveScroll: true,
@@ -62,6 +67,7 @@ export function NavUser({
           passwordConfirmation: '',
         })
       },
+      onFinish: () => setPasswordSubmitting(false),
     })
   }
 
@@ -136,9 +142,9 @@ export function NavUser({
               <div className="grid gap-3">
                 <div className="grid gap-2">
                   <Label htmlFor="current-password">Password Lama</Label>
-                  <Input
+                  <PasswordInput
                     id="current-password"
-                    type="password"
+                    placeholder="Masukkan password lama"
                     value={passwordForm.currentPassword}
                     onChange={(event) =>
                       setPasswordForm((current) => ({
@@ -154,9 +160,9 @@ export function NavUser({
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="new-password">Password Baru</Label>
-                  <Input
+                  <PasswordInput
                     id="new-password"
-                    type="password"
+                    placeholder="Masukkan password baru"
                     value={passwordForm.password}
                     onChange={(event) =>
                       setPasswordForm((current) => ({
@@ -175,6 +181,7 @@ export function NavUser({
                   <Input
                     id="password-confirmation"
                     type="password"
+                    placeholder="Ulangi password baru"
                     value={passwordForm.passwordConfirmation}
                     onChange={(event) =>
                       setPasswordForm((current) => ({
@@ -190,7 +197,9 @@ export function NavUser({
                 </div>
               </div>
               <DialogFooter>
-                <Button type="submit">Save changes</Button>
+                <SubmitButton loading={passwordSubmitting} loadingText="Menyimpan...">
+                  Save changes
+                </SubmitButton>
               </DialogFooter>
             </form>
           </DialogContent>

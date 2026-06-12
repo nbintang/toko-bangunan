@@ -2,7 +2,7 @@ import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
 import router from '@adonisjs/core/services/router'
 
-router.on('/').renderInertia('home', {}).as('home')
+router.get('/', ({ response }) => response.redirect().toRoute('session.create')).as('home')
 
 /**
  * Guest routes
@@ -23,6 +23,7 @@ router
  */
 router
   .group(() => {
+    router.get('/', ({ response }) => response.redirect().toRoute('dashboard.overview')).as('index')
     router.get('/overview', [controllers.Dashboard, 'index']).as('overview')
     router.get('/inventory', [controllers.Inventory, 'index']).as('inventory.index')
     router

@@ -1,4 +1,5 @@
 import { AppSidebar } from '@/components/app-sidebar'
+import { FlashToaster } from '@/components/flash-toaster'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -73,6 +74,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <SidebarProvider>
+      <FlashToaster />
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b">

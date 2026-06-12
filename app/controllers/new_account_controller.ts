@@ -7,11 +7,12 @@ export default class NewAccountController {
     return inertia.render('auth/signup', {})
   }
 
-  async store({ request, response, auth }: HttpContext) {
+  async store({ request, response, auth, session }: HttpContext) {
     const payload = await request.validateUsing(signupValidator)
     const user = await User.create({ ...payload })
 
     await auth.use('web').login(user)
+    session.flash('success', 'Akun berhasil dibuat.')
     response.redirect().toRoute('home')
   }
 }

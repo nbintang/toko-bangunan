@@ -6,13 +6,14 @@ import {
   PackageIcon,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from 'recharts'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
   CardAction,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
@@ -91,6 +92,16 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+const stockChartConfig = {
+  stock: {
+    label: 'Stok',
+    color: 'var(--chart-2)',
+  },
+  label: {
+    color: 'var(--background)',
+  },
+} satisfies ChartConfig
+
 const numberFormatter = new Intl.NumberFormat('id-ID')
 const dateFormatter = new Intl.DateTimeFormat('id-ID', {
   day: '2-digit',
@@ -150,7 +161,7 @@ export default function Overview({
         <SummaryCard
           title="Stok Rendah"
           value={lowStockCount}
-          description="Stok di bawah 10"
+          description="Stok sama/di bawah minimum"
           icon={<AlertTriangleIcon />}
           warning
         />
@@ -167,19 +178,18 @@ export default function Overview({
           <CardContent>
             {chartData.length > 0 ? (
               <ChartContainer config={chartConfig} className="min-h-72 w-full">
-                <BarChart data={chartData} margin={{ left: -12, right: 8, top: 8 }}>
+                <BarChart accessibilityLayer data={chartData}>
                   <CartesianGrid vertical={false} />
                   <XAxis
                     dataKey="label"
                     tickLine={false}
                     axisLine={false}
-                    tickMargin={8}
+                    tickMargin={10}
                     interval="preserveStartEnd"
                   />
-                  <YAxis tickLine={false} axisLine={false} tickMargin={8} width={36} />
-                  <ChartTooltip content={<ChartTooltipContent indicator="dashed" />} />
-                  <Bar dataKey="stockIn" fill="var(--color-stockIn)" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="stockOut" fill="var(--color-stockOut)" radius={[4, 4, 0, 0]} />
+                  <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                  <Bar dataKey="stockIn" fill="var(--color-stockIn)" radius={8} />
+                  <Bar dataKey="stockOut" fill="var(--color-stockOut)" radius={8} />
                 </BarChart>
               </ChartContainer>
             ) : (
@@ -188,28 +198,38 @@ export default function Overview({
               </div>
             )}
           </CardContent>
+          <CardFooter className="flex-col items-start gap-2 text-sm">
+            <div className="flex gap-2 leading-none font-medium">
+              Total stok masuk {numberFormatter.format(totalStockIn)} barang
+            </div>
+            <div className="leading-none text-muted-foreground">
+              Total stok keluar {numberFormatter.format(totalStockOut)} barang bulan ini
+            </div>
+          </CardFooter>
         </Card>
 
         <ProductListCard
           title="Stok Perlu Dicek"
-          description="Prioritas barang dengan stok paling rendah."
+          description="Barang dengan stok sama atau di bawah batas minimum."
           products={lowStockProducts}
-          emptyText="Tidak ada stok rendah."
+          emptyText="Tidak ada stok di bawah batas minimum."
         />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <ProductListCard
+        <ProductStockChartCard
           title="Stok Terendah"
-          description="Lima barang dengan stok di bawah 10."
+          description="Lima barang dengan stok paling rendah."
           products={topMinProducts}
-          emptyText="Tidak ada data stok rendah."
+          emptyText="Tidak ada data stok."
+          tone="lowest"
         />
-        <ProductListCard
+        <ProductStockChartCard
           title="Stok Tertinggi"
           description="Lima barang dengan stok paling banyak."
           products={topMaxProducts}
           emptyText="Tidak ada data stok tinggi."
+          tone="highest"
         />
       </div>
 
@@ -297,6 +317,88 @@ function SummaryCard({
       <CardContent className="text-xs text-muted-foreground">{description}</CardContent>
     </Card>
   )
+}
+
+function ProductStockChartCard({
+  title,
+  description,
+  products,
+  emptyText,
+  tone,
+}: {
+  title: string
+  description: string
+  products: DashboardProduct[]
+  emptyText: string
+  tone: 'highest' | 'lowest'
+}) {
+  const stocks = products.map((product) => product.stock)
+  const minimumStock = Math.min(...stocks)
+  const maximumStock = Math.max(...stocks)
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {products.length > 0 ? (
+          <ChartContainer config={stockChartConfig} className="min-h-64 w-full">
+            <BarChart accessibilityLayer data={products} layout="vertical" margin={{ right: 48 }}>
+              <CartesianGrid horizontal={false} />
+              <YAxis dataKey="name" type="category" hide />
+              <XAxis dataKey="stock" type="number" hide />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent indicator="line" hideLabel />}
+              />
+              <Bar dataKey="stock" fill="var(--color-stock)" radius={4}>
+                {products.map((product) => (
+                  <Cell
+                    key={product.id}
+                    fill={getStockBarColor(product.stock, minimumStock, maximumStock, tone)}
+                  />
+                ))}
+                <LabelList
+                  dataKey="name"
+                  position="insideLeft"
+                  offset={8}
+                  className="fill-(--color-label)"
+                  fontSize={12}
+                />
+                <LabelList
+                  dataKey="stock"
+                  position="right"
+                  offset={8}
+                  className="fill-foreground"
+                  fontSize={12}
+                  formatter={(value) => numberFormatter.format(Number(value ?? 0))}
+                />
+              </Bar>
+            </BarChart>
+          </ChartContainer>
+        ) : (
+          <div className="flex h-64 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+            {emptyText}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function getStockBarColor(
+  stock: number,
+  minimumStock: number,
+  maximumStock: number,
+  tone: 'highest' | 'lowest'
+) {
+  const range = maximumStock - minimumStock
+  const ratio = range === 0 ? (tone === 'highest' ? 1 : 0) : (stock - minimumStock) / range
+  const lightness = Math.round(26 + ratio * 28)
+
+  return tone === 'highest' ? `hsl(142 72% ${lightness}%)` : `hsl(0 74% ${lightness}%)`
 }
 
 function ProductListCard({

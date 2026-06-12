@@ -6,6 +6,7 @@ import {
   type StockTransaction,
 } from '@/components/data-table/columns/stock-transactions-columns'
 import { DataTable } from '@/components/data-table/table'
+import { DatePicker } from '@/components/date-picker'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -18,9 +19,18 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { SubmitButton } from '@/components/submit_button'
 import type { InertiaProps } from '~/types'
+import type { PaginatedData } from '~/types/pagination'
 
 type InventoryProduct = {
   id: number
@@ -45,11 +55,12 @@ type TransactionForm = {
 
 type PageProps = InertiaProps<{
   products: InventoryProduct[]
-  transactions: StockTransaction[]
+  transactions: PaginatedData<StockTransaction>
   totalProducts: number
   totalStock: number
   lowStockCount: number
   emptyStockCount: number
+  search?: string
 }>
 
 function today() {
@@ -65,6 +76,7 @@ export default function InventoryIndex({
   emptyStockCount,
 }: PageProps) {
   const [open, setOpen] = React.useState(false)
+  const [submitting, setSubmitting] = React.useState(false)
   const [form, setForm] = React.useState<TransactionForm>({
     productId: '',
     type: 'in',
@@ -86,6 +98,9 @@ export default function InventoryIndex({
 
   function storeTransaction(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (submitting) return
+
+    setSubmitting(true)
 
     router.post(
       '/dashboard/inventory/transactions',
@@ -99,6 +114,7 @@ export default function InventoryIndex({
       {
         preserveScroll: true,
         onSuccess: () => setOpen(false),
+        onFinish: () => setSubmitting(false),
       }
     )
   }
@@ -114,7 +130,7 @@ export default function InventoryIndex({
         </div>
         <Button onClick={openCreateDialog} disabled={products.length === 0}>
           <PlusIcon data-icon="inline-start" />
-          Create
+          Buat
         </Button>
       </div>
 
@@ -129,54 +145,64 @@ export default function InventoryIndex({
         <SummaryCard title="Stok Kosong" value={emptyStockCount} description="Barang tanpa stok" />
       </div>
 
-      <DataTable columns={stockTransactionsColumns} data={transactions} />
+      <DataTable
+        columns={stockTransactionsColumns}
+        data={transactions.data}
+        pagination={transactions.meta}
+      />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Create Transaksi Persediaan</DialogTitle>
+            <DialogTitle>Buat Transaksi Persediaan</DialogTitle>
             <DialogDescription>Catat barang masuk atau keluar.</DialogDescription>
           </DialogHeader>
           <form className="grid gap-4" onSubmit={storeTransaction}>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="transaction-product">Barang</Label>
-                <NativeSelect
-                  id="transaction-product"
-                  className="w-full"
+                <Select
                   value={form.productId}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, productId: event.target.value }))
+                  onValueChange={(value) =>
+                    setForm((current) => ({ ...current, productId: value }))
                   }
-                  required
+                  disabled={products.length === 0}
                 >
-                  <NativeSelectOption value="" disabled>
-                    Pilih barang
-                  </NativeSelectOption>
-                  {products.map((product) => (
-                    <NativeSelectOption key={product.id} value={product.id}>
-                      {product.name} - stok {product.stock}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
+                  <SelectTrigger id="transaction-product" className="w-full">
+                    <SelectValue placeholder="Pilih barang" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {products.map((product) => (
+                        <SelectItem key={product.id} value={String(product.id)}>
+                          {product.name} - stok {product.stock}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="transaction-type">Jenis</Label>
-                <NativeSelect
-                  id="transaction-type"
-                  className="w-full"
+                <Select
                   value={form.type}
-                  onChange={(event) =>
+                  onValueChange={(value) =>
                     setForm((current) => ({
                       ...current,
-                      type: event.target.value as TransactionForm['type'],
+                      type: value as TransactionForm['type'],
                     }))
                   }
-                  required
                 >
-                  <NativeSelectOption value="in">Masuk</NativeSelectOption>
-                  <NativeSelectOption value="out">Keluar</NativeSelectOption>
-                </NativeSelect>
+                  <SelectTrigger id="transaction-type" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="in">Masuk</SelectItem>
+                      <SelectItem value="out">Keluar</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="transaction-quantity">Jumlah</Label>
@@ -184,6 +210,7 @@ export default function InventoryIndex({
                   id="transaction-quantity"
                   type="number"
                   min="1"
+                  placeholder="Masukkan jumlah barang"
                   value={form.quantity}
                   onChange={(event) =>
                     setForm((current) => ({ ...current, quantity: event.target.value }))
@@ -193,20 +220,19 @@ export default function InventoryIndex({
               </div>
               <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="transaction-date">Tanggal</Label>
-                <Input
+                <DatePicker
                   id="transaction-date"
-                  type="date"
                   value={form.transactionDate}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, transactionDate: event.target.value }))
+                  onChange={(value) =>
+                    setForm((current) => ({ ...current, transactionDate: value }))
                   }
-                  required
                 />
               </div>
               <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="transaction-note">Catatan</Label>
                 <Textarea
                   id="transaction-note"
+                  placeholder="Tambahkan catatan transaksi (opsional)"
                   value={form.note}
                   onChange={(event) =>
                     setForm((current) => ({ ...current, note: event.target.value }))
@@ -215,7 +241,9 @@ export default function InventoryIndex({
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit">Save</Button>
+              <SubmitButton loading={submitting} loadingText="Menyimpan...">
+                Save
+              </SubmitButton>
             </DialogFooter>
           </form>
         </DialogContent>

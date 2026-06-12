@@ -1,14 +1,35 @@
 import Category from '#models/category'
 import Product from '#models/product'
+import { getPaginationParams } from '#services/pagination'
 import { createCategoryValidator } from '#validators/create_category'
 import { updateCategoryValidator } from '#validators/update_category'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class CategoriesController {
-  async index({ inertia }: HttpContext) {
-    const categories = await Category.query().orderBy('name', 'asc')
+  async index({ inertia, request }: HttpContext) {
+    const search = request.input('search') as string | undefined
+    const { page, perPage } = getPaginationParams(request.input('page'), request.input('perPage'))
+    const query = Category.query()
 
-    return inertia.render('dashboard/master-data/categories/index', { categories })
+    if (search) {
+      query.where((builder) => {
+        builder.whereILike('name', `%${search}%`).orWhereILike('description', `%${search}%`)
+      })
+    }
+
+    const categories = await query.orderBy('name', 'asc').paginate(page, perPage)
+
+    return inertia.render('dashboard/master-data/categories/index', {
+      categories: {
+        data: categories.all().map((category) => ({
+          id: category.id,
+          name: category.name,
+          description: category.description,
+        })),
+        meta: categories.getMeta(),
+      },
+      search,
+    })
   }
 
   async store({ request, response, session }: HttpContext) {

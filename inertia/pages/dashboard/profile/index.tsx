@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SubmitButton } from '@/components/submit_button'
 import type { InertiaProps } from '~/types'
 
 type PageProps = InertiaProps
@@ -21,25 +22,31 @@ type PageProps = InertiaProps
 export default function ProfileIndex({ user }: PageProps) {
   const { errors } = usePage<InertiaProps>().props
   const [open, setOpen] = React.useState(false)
+  const [submitting, setSubmitting] = React.useState(false)
   const [form, setForm] = React.useState({
     fullName: user?.fullName ?? '',
     email: user?.email ?? '',
   })
   const displayName = user?.fullName ?? user?.email ?? '-'
 
-  React.useEffect(() => {
+  function openProfileDialog() {
     setForm({
       fullName: user?.fullName ?? '',
       email: user?.email ?? '',
     })
-  }, [user?.email, user?.fullName])
+    setOpen(true)
+  }
 
   function submitProfile(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (submitting) return
+
+    setSubmitting(true)
 
     router.patch('/dashboard/profile', form, {
       preserveScroll: true,
       onSuccess: () => setOpen(false),
+      onFinish: () => setSubmitting(false),
     })
   }
 
@@ -50,7 +57,7 @@ export default function ProfileIndex({ user }: PageProps) {
           <h1 className="text-2xl font-semibold tracking-normal">Profile</h1>
           <p className="text-sm text-muted-foreground">Lihat dan perbarui data akun pengguna.</p>
         </div>
-        <Button onClick={() => setOpen(true)}>
+        <Button onClick={openProfileDialog}>
           <EditIcon data-icon="inline-start" />
           Ubah Profile
         </Button>
@@ -89,6 +96,7 @@ export default function ProfileIndex({ user }: PageProps) {
                 <Label htmlFor="profile-full-name">Nama Lengkap</Label>
                 <Input
                   id="profile-full-name"
+                  placeholder="Masukkan nama lengkap"
                   value={form.fullName}
                   onChange={(event) =>
                     setForm((current) => ({
@@ -107,6 +115,7 @@ export default function ProfileIndex({ user }: PageProps) {
                 <Input
                   id="profile-email"
                   type="email"
+                  placeholder="nama@contoh.com"
                   value={form.email}
                   onChange={(event) =>
                     setForm((current) => ({
@@ -120,7 +129,9 @@ export default function ProfileIndex({ user }: PageProps) {
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit">Save changes</Button>
+              <SubmitButton loading={submitting} loadingText="Menyimpan...">
+                Save changes
+              </SubmitButton>
             </DialogFooter>
           </form>
         </DialogContent>

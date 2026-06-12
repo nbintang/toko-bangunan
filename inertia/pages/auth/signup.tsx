@@ -1,4 +1,5 @@
 import { Form } from '@adonisjs/inertia/react'
+import { SubmitButton } from '@/components/submit_button'
 
 export default function Signup() {
   return (
@@ -10,7 +11,7 @@ export default function Signup() {
 
       <div>
         <Form route="new_account.store">
-          {({ errors }) => (
+          {({ errors, processing }) => (
             <>
               <div>
                 <label htmlFor="fullName">Full name</label>
@@ -18,6 +19,7 @@ export default function Signup() {
                   type="text"
                   name="fullName"
                   id="fullName"
+                  placeholder="Enter your full name"
                   data-invalid={errors.fullName ? 'true' : undefined}
                 />
                 {errors.fullName && <div>{errors.fullName}</div>}
@@ -29,6 +31,7 @@ export default function Signup() {
                   type="email"
                   name="email"
                   id="email"
+                  placeholder="name@example.com"
                   autoComplete="email"
                   data-invalid={errors.email ? 'true' : undefined}
                 />
@@ -41,6 +44,7 @@ export default function Signup() {
                   type="password"
                   name="password"
                   id="password"
+                  placeholder="Enter your password"
                   autoComplete="new-password"
                   data-invalid={errors.password ? 'true' : undefined}
                 />
@@ -53,6 +57,7 @@ export default function Signup() {
                   type="password"
                   name="passwordConfirmation"
                   id="passwordConfirmation"
+                  placeholder="Confirm your password"
                   autoComplete="new-password"
                   data-invalid={errors.passwordConfirmation ? 'true' : undefined}
                 />
@@ -60,9 +65,9 @@ export default function Signup() {
               </div>
 
               <div>
-                <button type="submit" className="button">
+                <SubmitButton loading={processing} loadingText="Creating account...">
                   Sign up
-                </button>
+                </SubmitButton>
               </div>
             </>
           )}

@@ -13,6 +13,7 @@ export interface ApiDefinition {
     destroy: typeof routes['session.destroy']
   }
   dashboard: {
+    index: typeof routes['dashboard.index']
     overview: typeof routes['dashboard.overview']
     inventory: {
       index: typeof routes['dashboard.inventory.index']

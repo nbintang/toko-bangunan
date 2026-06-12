@@ -16,11 +16,11 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar'
 import {
-  GalleryVerticalEndIcon,
   BotIcon,
   BookOpenIcon,
   Settings2Icon,
   LayoutDashboard,
+  DumbbellIcon,
 } from 'lucide-react'
 import type { InertiaProps } from '~/types'
 
@@ -77,11 +77,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
         >
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-            <GalleryVerticalEndIcon />
+            <DumbbellIcon />
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight">
-            <span className="truncate font-medium"> Toko Olahraga</span>
-            <span className="truncate text-xs">tess</span>
+            <span className="truncate font-medium">Toko Olahraga</span>
+            <span className="truncate text-xs">Peralatan olahraga</span>
           </div>
         </SidebarMenuButton>
           </SidebarMenuItem>

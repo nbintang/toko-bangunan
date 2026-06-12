@@ -2,6 +2,7 @@ import Category from '#models/category'
 import Product from '#models/product'
 import StockTransaction from '#models/stock_transaction'
 import User from '#models/user'
+import { getPaginationParams } from '#services/pagination'
 import { stockTransactionValidator } from '#validators/stock_transaction'
 import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
@@ -36,25 +37,77 @@ function serializeUser(user: User) {
 }
 
 export default class InventoryController {
-  async index({ inertia }: HttpContext) {
+  async index({ inertia, request }: HttpContext) {
+    const search = request.input('search') as string | undefined
+    const { page, perPage } = getPaginationParams(request.input('page'), request.input('perPage'))
     const categories = await Category.query().orderBy('name', 'asc')
     const products = await Product.query().orderBy('name', 'asc')
-    const transactions = await StockTransaction.query()
-      .orderBy('transactionDate', 'desc')
-      .orderBy('id', 'desc')
-    const users = await User.query()
 
     const categoryById = new Map(
       categories.map((category) => [category.id, serializeCategory(category)])
     )
-    const userById = new Map(users.map((user) => [user.id, serializeUser(user)]))
 
     const serializedProducts = products.map((product) =>
       serializeProduct(product, categoryById.get(product.categoryId) ?? null)
     )
     const productById = new Map(serializedProducts.map((product) => [product.id, product]))
+    const userBySearch = new Set<number>()
+    const productBySearch = new Set<number>()
+    const normalizedSearch = search?.toLowerCase()
 
-    const serializedTransactions = transactions.map((transaction) => {
+    if (normalizedSearch) {
+      const matchingUsers = await User.query().where((builder) => {
+        builder.whereILike('fullName', `%${search}%`).orWhereILike('email', `%${search}%`)
+      })
+
+      for (const user of matchingUsers) {
+        userBySearch.add(user.id)
+      }
+
+      for (const product of serializedProducts) {
+        if (
+          product.name.toLowerCase().includes(normalizedSearch) ||
+          product.code.toLowerCase().includes(normalizedSearch) ||
+          product.unit.toLowerCase().includes(normalizedSearch) ||
+          product.category?.name.toLowerCase().includes(normalizedSearch)
+        ) {
+          productBySearch.add(product.id)
+        }
+      }
+    }
+
+    const query = StockTransaction.query()
+
+    if (search) {
+      query.where((builder) => {
+        builder
+          .whereILike('note', `%${search}%`)
+          .orWhereILike('type', `%${search}%`)
+          .orWhereILike('transactionDate', `%${search}%`)
+
+        if (productBySearch.size > 0) {
+          builder.orWhereIn('productId', [...productBySearch])
+        }
+
+        if (userBySearch.size > 0) {
+          builder.orWhereIn('userId', [...userBySearch])
+        }
+      })
+    }
+
+    const transactions = await query
+      .orderBy('transactionDate', 'desc')
+      .orderBy('id', 'desc')
+      .paginate(page, perPage)
+    const transactionRows = transactions.all()
+    const transactionUserIds = [
+      ...new Set(transactionRows.map((transaction) => transaction.userId)),
+    ]
+    const transactionUsers =
+      transactionUserIds.length > 0 ? await User.query().whereIn('id', transactionUserIds) : []
+    const userById = new Map(transactionUsers.map((user) => [user.id, serializeUser(user)]))
+
+    const serializedTransactions = transactionRows.map((transaction) => {
       const product = productById.get(transaction.productId)
 
       return {
@@ -73,13 +126,17 @@ export default class InventoryController {
 
     return inertia.render('dashboard/inventory/index', {
       products: serializedProducts,
-      transactions: serializedTransactions,
+      transactions: {
+        data: serializedTransactions,
+        meta: transactions.getMeta(),
+      },
       totalProducts: products.length,
       totalStock: products.reduce((total, product) => total + product.stock, 0),
       lowStockCount: products.filter(
         (product) => product.stock <= product.minimumStock && product.stock > 0
       ).length,
       emptyStockCount: products.filter((product) => product.stock === 0).length,
+      search,
     })
   }
 

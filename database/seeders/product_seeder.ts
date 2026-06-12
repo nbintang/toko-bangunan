@@ -6,96 +6,66 @@ import StockTransaction from '#models/stock_transaction'
 export default class extends BaseSeeder {
   async run() {
     const products = [
-      {
-        categoryName: 'Sepak Bola',
-        code: 'SPB-001',
-        name: 'Bola Sepak Size 5',
-        description: 'Bola sepak standar pertandingan untuk lapangan outdoor.',
-        unit: 'pcs',
-        stock: 48,
-        minimumStock: 10,
-      },
-      {
-        categoryName: 'Sepak Bola',
-        code: 'SPB-002',
-        name: 'Sepatu Bola Stud FG',
-        description: 'Sepatu bola untuk lapangan rumput natural.',
-        unit: 'pasang',
-        stock: 32,
-        minimumStock: 8,
-      },
-      {
-        categoryName: 'Fitness',
-        code: 'FIT-001',
-        name: 'Dumbbell Hex 5kg',
-        description: 'Dumbbell karet hex untuk latihan beban harian.',
-        unit: 'pcs',
-        stock: 56,
-        minimumStock: 12,
-      },
-      {
-        categoryName: 'Fitness',
-        code: 'FIT-002',
-        name: 'Barbell Plate 10kg',
-        description: 'Plate beban besi 10kg untuk barbell dan power rack.',
-        unit: 'pcs',
-        stock: 72,
-        minimumStock: 16,
-      },
-      {
-        categoryName: 'Gymnastic',
-        code: 'GYM-001',
-        name: 'Yoga Mat 6mm',
-        description: 'Matras anti slip untuk yoga, pilates, dan stretching.',
-        unit: 'pcs',
-        stock: 64,
-        minimumStock: 14,
-      },
-      {
-        categoryName: 'Gymnastic',
-        code: 'GYM-002',
-        name: 'Gym Ball 65cm',
-        description: 'Bola gym untuk latihan core, balance, dan rehabilitasi.',
-        unit: 'pcs',
-        stock: 30,
-        minimumStock: 8,
-      },
-      {
-        categoryName: 'Bulutangkis',
-        code: 'BLT-001',
-        name: 'Raket Badminton Carbon',
-        description: 'Raket ringan untuk latihan dan pertandingan bulutangkis.',
-        unit: 'pcs',
-        stock: 42,
-        minimumStock: 10,
-      },
-      {
-        categoryName: 'Bulutangkis',
-        code: 'BLT-002',
-        name: 'Shuttlecock Nylon',
-        description: 'Shuttlecock nylon isi 6 untuk latihan rutin.',
-        unit: 'tube',
-        stock: 90,
-        minimumStock: 20,
-      },
-      {
-        categoryName: 'Lari dan Training',
-        code: 'LRT-001',
-        name: 'Resistance Band Set',
-        description: 'Set resistance band untuk warm up dan latihan strength.',
-        unit: 'set',
-        stock: 52,
-        minimumStock: 12,
-      },
-      {
-        categoryName: 'Lari dan Training',
-        code: 'LRT-002',
-        name: 'Skipping Rope Speed',
-        description: 'Tali skipping speed rope untuk kardio dan agility.',
-        unit: 'pcs',
-        stock: 68,
-        minimumStock: 15,
-      },
+      ...createProducts('Sepak Bola', 'SPB', [
+        ['Bola Sepak Size 5', 'pcs'],
+        ['Sepatu Bola Stud FG', 'pasang'],
+        ['Jersey Bola Training', 'pcs'],
+        ['Sarung Tangan Kiper', 'pasang'],
+      ]),
+      ...createProducts('Fitness', 'FIT', [
+        ['Dumbbell Hex 5kg', 'pcs'],
+        ['Barbell Plate 10kg', 'pcs'],
+        ['Kettlebell 8kg', 'pcs'],
+        ['Bench Press Adjustable', 'unit'],
+      ]),
+      ...createProducts('Gymnastic', 'GYM', [
+        ['Yoga Mat 6mm', 'pcs'],
+        ['Gym Ball 65cm', 'pcs'],
+        ['Foam Roller Medium', 'pcs'],
+        ['Pilates Ring', 'pcs'],
+      ]),
+      ...createProducts('Bulutangkis', 'BLT', [
+        ['Raket Badminton Carbon', 'pcs'],
+        ['Shuttlecock Nylon', 'tube'],
+        ['Grip Raket Premium', 'roll'],
+        ['Net Badminton Portable', 'unit'],
+      ]),
+      ...createProducts('Lari dan Training', 'LRT', [
+        ['Resistance Band Set', 'set'],
+        ['Skipping Rope Speed', 'pcs'],
+        ['Cone Training Set', 'set'],
+        ['Agility Ladder', 'pcs'],
+      ]),
+      ...createProducts('Basket', 'BSK', [
+        ['Bola Basket Indoor', 'pcs'],
+        ['Jersey Basket Reversible', 'pcs'],
+        ['Ring Basket Portable', 'unit'],
+        ['Sleeve Arm Compression', 'pasang'],
+      ]),
+      ...createProducts('Renang', 'RNG', [
+        ['Kacamata Renang Anti Fog', 'pcs'],
+        ['Topi Renang Silicone', 'pcs'],
+        ['Kickboard Training', 'pcs'],
+        ['Pull Buoy Foam', 'pcs'],
+      ]),
+      ...createProducts('Tenis', 'TNS', [
+        ['Raket Tenis Graphite', 'pcs'],
+        ['Bola Tenis Pressurized', 'kaleng'],
+        ['Grip Tenis Overgrip', 'roll'],
+        ['Tas Raket Tenis', 'pcs'],
+      ]),
+      ...createProducts('Outdoor', 'OTD', [
+        ['Trekking Pole Aluminum', 'pasang'],
+        ['Headlamp Outdoor', 'pcs'],
+        ['Dry Bag 10L', 'pcs'],
+        ['Matras Camping Lipat', 'pcs'],
+      ]),
+      ...createProducts('Proteksi Olahraga', 'PRT', [
+        ['Knee Support Elastic', 'pcs'],
+        ['Elbow Guard Foam', 'pasang'],
+        ['Ankle Support Strap', 'pcs'],
+        ['Mouth Guard Training', 'pcs'],
+      ]),
     ]
 
     const obsoleteProductCodes = [
@@ -148,4 +118,22 @@ export default class extends BaseSeeder {
       )
     }
   }
+}
+
+function createProducts(categoryName: string, prefix: string, items: [string, string][]) {
+  return items.map(([name, unit], index) => {
+    const sequence = index + 1
+    const stock = 28 + ((prefix.charCodeAt(0) + sequence * 13) % 95)
+    const minimumStock = 6 + ((prefix.charCodeAt(1) + sequence * 5) % 18)
+
+    return {
+      categoryName,
+      code: `${prefix}-${String(sequence).padStart(3, '0')}`,
+      name,
+      description: `${name} untuk kebutuhan toko olahraga, latihan, dan penjualan harian.`,
+      unit,
+      stock,
+      minimumStock,
+    }
+  })
 }

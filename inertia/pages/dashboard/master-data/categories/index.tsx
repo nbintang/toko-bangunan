@@ -28,7 +28,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { SubmitButton } from '@/components/submit_button'
 import type { InertiaProps } from '~/types'
+import type { PaginatedData } from '~/types/pagination'
 
 type CategoryForm = {
   name: string
@@ -36,7 +38,8 @@ type CategoryForm = {
 }
 
 type PageProps = InertiaProps<{
-  categories: Category[]
+  categories: PaginatedData<Category>
+  search?: string
 }>
 
 const emptyForm: CategoryForm = {
@@ -49,6 +52,7 @@ export default function CategoriesIndex({ categories }: PageProps) {
   const [editCategory, setEditCategory] = React.useState<Category | null>(null)
   const [deleteCategory, setDeleteCategory] = React.useState<Category | null>(null)
   const [form, setForm] = React.useState<CategoryForm>(emptyForm)
+  const [submitting, setSubmitting] = React.useState(false)
 
   function openCreateDialog() {
     setForm(emptyForm)
@@ -65,21 +69,28 @@ export default function CategoriesIndex({ categories }: PageProps) {
 
   function storeCategory(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (submitting) return
+
+    setSubmitting(true)
 
     router.post('/dashboard/master-data/category', form, {
       preserveScroll: true,
       onSuccess: () => setCreateOpen(false),
+      onFinish: () => setSubmitting(false),
     })
   }
 
   function updateCategory(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (!editCategory) return
+    if (!editCategory || submitting) return
+
+    setSubmitting(true)
 
     router.patch(`/dashboard/master-data/category/${editCategory.id}`, form, {
       preserveScroll: true,
       onSuccess: () => setEditCategory(null),
+      onFinish: () => setSubmitting(false),
     })
   }
 
@@ -108,22 +119,24 @@ export default function CategoriesIndex({ categories }: PageProps) {
         </div>
         <Button onClick={openCreateDialog}>
           <PlusIcon data-icon="inline-start" />
-          Create
+          Buat
         </Button>
       </div>
 
-      <DataTable columns={columns} data={categories} />
+      <DataTable columns={columns} data={categories.data} pagination={categories.meta} />
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Kategori</DialogTitle>
+            <DialogTitle>Buat Kategori</DialogTitle>
             <DialogDescription>Tambahkan kategori barang baru.</DialogDescription>
           </DialogHeader>
           <form className="grid gap-4" onSubmit={storeCategory}>
             <CategoryFields form={form} setForm={setForm} />
             <DialogFooter>
-              <Button type="submit">Save</Button>
+              <SubmitButton loading={submitting} loadingText="Menyimpan...">
+                Save
+              </SubmitButton>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -138,7 +151,9 @@ export default function CategoriesIndex({ categories }: PageProps) {
           <form className="grid gap-4" onSubmit={updateCategory}>
             <CategoryFields form={form} setForm={setForm} />
             <DialogFooter>
-              <Button type="submit">Save changes</Button>
+              <SubmitButton loading={submitting} loadingText="Menyimpan...">
+                Save changes
+              </SubmitButton>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -152,7 +167,7 @@ export default function CategoriesIndex({ categories }: PageProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus kategori?</AlertDialogTitle>
             <AlertDialogDescription>
-              Data kategori "{deleteCategory?.name}" akan dihapus permanen.
+              Data kategori {deleteCategory?.name} akan dihapus permanen.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -180,6 +195,7 @@ function CategoryFields({
         <Label htmlFor="category-name">Nama</Label>
         <Input
           id="category-name"
+          placeholder="Contoh: Semen"
           value={form.name}
           onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
           required
@@ -189,6 +205,7 @@ function CategoryFields({
         <Label htmlFor="category-description">Deskripsi</Label>
         <Textarea
           id="category-description"
+          placeholder="Jelaskan kategori barang (opsional)"
           value={form.description}
           onChange={(event) =>
             setForm((current) => ({ ...current, description: event.target.value }))

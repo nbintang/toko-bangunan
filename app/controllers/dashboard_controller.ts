@@ -54,13 +54,14 @@ export default class DashboardController {
     const productById = new Map(serializedProducts.map((product) => [product.id, product]))
 
     const lowStockProducts = serializedProducts
-      .filter((product) => product.stock < 10)
+      .filter((product) => product.stock <= product.minimumStock)
       .sort((first, second) => first.stock - second.stock)
       .slice(0, 5)
 
-    const topMinProducts = lowStockProducts
+    const topMinProducts = serializedProducts
+      .sort((first, second) => first.stock - second.stock)
+      .slice(0, 5)
     const topMaxProducts = serializedProducts
-      .filter((product) => product.stock >= 10)
       .sort((first, second) => second.stock - first.stock)
       .slice(0, 5)
 
@@ -122,7 +123,7 @@ export default class DashboardController {
       totalStockOut: transactions
         .filter((transaction) => transaction.type === 'out')
         .reduce((total, transaction) => total + transaction.quantity, 0),
-      lowStockCount: products.filter((product) => product.stock < 10).length,
+      lowStockCount: products.filter((product) => product.stock <= product.minimumStock).length,
       lowStockProducts,
       topMinProducts,
       topMaxProducts,

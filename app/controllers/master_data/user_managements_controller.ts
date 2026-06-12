@@ -1,13 +1,34 @@
 import User from '#models/user'
+import { getPaginationParams } from '#services/pagination'
 import { createUserManagementValidator, updateUserManagementValidator } from '#validators/user'
 import hash from '@adonisjs/core/services/hash'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class UserManagementsController {
-  async index({ inertia }: HttpContext) {
-    const users = await User.query().orderBy('fullName', 'asc')
+  async index({ inertia, request }: HttpContext) {
+    const search = request.input('search') as string | undefined
+    const { page, perPage } = getPaginationParams(request.input('page'), request.input('perPage'))
+    const query = User.query()
 
-    return inertia.render('dashboard/master-data/users/index', { users })
+    if (search) {
+      query.where((builder) => {
+        builder.whereILike('fullName', `%${search}%`).orWhereILike('email', `%${search}%`)
+      })
+    }
+
+    const users = await query.orderBy('fullName', 'asc').paginate(page, perPage)
+
+    return inertia.render('dashboard/master-data/users/index', {
+      users: {
+        data: users.all().map((user) => ({
+          id: user.id,
+          fullName: user.fullName,
+          email: user.email,
+        })),
+        meta: users.getMeta(),
+      },
+      search,
+    })
   }
 
   async store({ request, response, session }: HttpContext) {

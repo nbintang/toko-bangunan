@@ -28,9 +28,18 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { SubmitButton } from '@/components/submit_button'
 import type { InertiaProps } from '~/types'
+import type { PaginatedData } from '~/types/pagination'
 
 type ProductForm = {
   categoryId: string
@@ -43,8 +52,9 @@ type ProductForm = {
 }
 
 type PageProps = InertiaProps<{
-  products: Product[]
+  products: PaginatedData<Product>
   categories: ProductCategory[]
+  search?: string
 }>
 
 const emptyForm: ProductForm = {
@@ -62,6 +72,7 @@ export default function ProductsIndex({ products, categories }: PageProps) {
   const [editProduct, setEditProduct] = React.useState<Product | null>(null)
   const [deleteProduct, setDeleteProduct] = React.useState<Product | null>(null)
   const [form, setForm] = React.useState<ProductForm>(emptyForm)
+  const [submitting, setSubmitting] = React.useState(false)
 
   const categoryById = React.useMemo(
     () => new Map(categories.map((category) => [category.id, category.name])),
@@ -100,21 +111,28 @@ export default function ProductsIndex({ products, categories }: PageProps) {
 
   function storeProduct(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (submitting) return
+
+    setSubmitting(true)
 
     router.post('/dashboard/master-data/items', payload(), {
       preserveScroll: true,
       onSuccess: () => setCreateOpen(false),
+      onFinish: () => setSubmitting(false),
     })
   }
 
   function updateProduct(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (!editProduct) return
+    if (!editProduct || submitting) return
+
+    setSubmitting(true)
 
     router.patch(`/dashboard/master-data/items/${editProduct.id}`, payload(), {
       preserveScroll: true,
       onSuccess: () => setEditProduct(null),
+      onFinish: () => setSubmitting(false),
     })
   }
 
@@ -144,22 +162,24 @@ export default function ProductsIndex({ products, categories }: PageProps) {
         </div>
         <Button onClick={openCreateDialog} disabled={categories.length === 0}>
           <PlusIcon data-icon="inline-start" />
-          Create
+          Buat
         </Button>
       </div>
 
-      <DataTable columns={columns} data={products} />
+      <DataTable columns={columns} data={products.data} pagination={products.meta} />
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Create Barang</DialogTitle>
+            <DialogTitle>Buat Barang</DialogTitle>
             <DialogDescription>Tambahkan barang baru ke master data.</DialogDescription>
           </DialogHeader>
           <form className="grid gap-4" onSubmit={storeProduct}>
             <ProductFields categories={categories} form={form} setForm={setForm} />
             <DialogFooter>
-              <Button type="submit">Save</Button>
+              <SubmitButton loading={submitting} loadingText="Menyimpan...">
+                Save
+              </SubmitButton>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -174,7 +194,9 @@ export default function ProductsIndex({ products, categories }: PageProps) {
           <form className="grid gap-4" onSubmit={updateProduct}>
             <ProductFields categories={categories} form={form} setForm={setForm} />
             <DialogFooter>
-              <Button type="submit">Save changes</Button>
+              <SubmitButton loading={submitting} loadingText="Menyimpan...">
+                Save changes
+              </SubmitButton>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -188,7 +210,7 @@ export default function ProductsIndex({ products, categories }: PageProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus barang?</AlertDialogTitle>
             <AlertDialogDescription>
-              Data barang "{deleteProduct?.name}" akan dihapus permanen.
+              Data barang {deleteProduct?.name} akan dihapus permanen.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -216,29 +238,30 @@ function ProductFields({
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="grid gap-2">
         <Label htmlFor="product-category">Kategori</Label>
-        <NativeSelect
-          id="product-category"
-          className="w-full"
+        <Select
           value={form.categoryId}
-          onChange={(event) =>
-            setForm((current) => ({ ...current, categoryId: event.target.value }))
-          }
-          required
+          onValueChange={(value) => setForm((current) => ({ ...current, categoryId: value }))}
+          disabled={categories.length === 0}
         >
-          <NativeSelectOption value="" disabled>
-            Pilih kategori
-          </NativeSelectOption>
-          {categories.map((category) => (
-            <NativeSelectOption key={category.id} value={category.id}>
-              {category.name}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
+          <SelectTrigger id="product-category" className="w-full">
+            <SelectValue placeholder="Pilih kategori" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={String(category.id)}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </div>
       <div className="grid gap-2">
         <Label htmlFor="product-code">Kode</Label>
         <Input
           id="product-code"
+          placeholder="Contoh: BRG-001"
           value={form.code}
           onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))}
           required
@@ -248,6 +271,7 @@ function ProductFields({
         <Label htmlFor="product-name">Nama</Label>
         <Input
           id="product-name"
+          placeholder="Masukkan nama barang"
           value={form.name}
           onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
           required
@@ -257,6 +281,7 @@ function ProductFields({
         <Label htmlFor="product-unit">Satuan</Label>
         <Input
           id="product-unit"
+          placeholder="Contoh: pcs, sak, atau batang"
           value={form.unit}
           onChange={(event) => setForm((current) => ({ ...current, unit: event.target.value }))}
           required
@@ -268,6 +293,7 @@ function ProductFields({
           id="product-stock"
           type="number"
           min="0"
+          placeholder="Masukkan stok awal"
           value={form.stock}
           onChange={(event) => setForm((current) => ({ ...current, stock: event.target.value }))}
           required
@@ -279,6 +305,7 @@ function ProductFields({
           id="product-minimum-stock"
           type="number"
           min="0"
+          placeholder="Masukkan batas stok minimum"
           value={form.minimumStock}
           onChange={(event) =>
             setForm((current) => ({ ...current, minimumStock: event.target.value }))
@@ -290,6 +317,7 @@ function ProductFields({
         <Label htmlFor="product-description">Deskripsi</Label>
         <Textarea
           id="product-description"
+          placeholder="Jelaskan detail barang (opsional)"
           value={form.description}
           onChange={(event) =>
             setForm((current) => ({ ...current, description: event.target.value }))

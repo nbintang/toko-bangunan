@@ -9,6 +9,7 @@ export type ScannedRoutes = {
     'new_account.store': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
     'session.store': { paramsTuple?: []; params?: {} }
+    'dashboard.index': { paramsTuple?: []; params?: {} }
     'dashboard.overview': { paramsTuple?: []; params?: {} }
     'dashboard.inventory.index': { paramsTuple?: []; params?: {} }
     'dashboard.inventory.transactions.store': { paramsTuple?: []; params?: {} }
@@ -34,6 +35,7 @@ export type ScannedRoutes = {
     'home': { paramsTuple?: []; params?: {} }
     'new_account.create': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
+    'dashboard.index': { paramsTuple?: []; params?: {} }
     'dashboard.overview': { paramsTuple?: []; params?: {} }
     'dashboard.inventory.index': { paramsTuple?: []; params?: {} }
     'dashboard.reports.index': { paramsTuple?: []; params?: {} }
@@ -46,6 +48,7 @@ export type ScannedRoutes = {
     'home': { paramsTuple?: []; params?: {} }
     'new_account.create': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
+    'dashboard.index': { paramsTuple?: []; params?: {} }
     'dashboard.overview': { paramsTuple?: []; params?: {} }
     'dashboard.inventory.index': { paramsTuple?: []; params?: {} }
     'dashboard.reports.index': { paramsTuple?: []; params?: {} }

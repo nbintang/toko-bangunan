@@ -17,6 +17,11 @@ export const signupValidator = vine.create({
   }),
 })
 
+export const loginValidator = vine.create({
+  email: email(),
+  password: vine.string().minLength(1).maxLength(128),
+})
+
 export const createUserManagementValidator = vine.create({
   fullName: vine.string().trim().maxLength(255),
   email: email().unique({ table: 'users', column: 'email' }),

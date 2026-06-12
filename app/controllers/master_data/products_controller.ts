@@ -1,16 +1,55 @@
 import Category from '#models/category'
 import Product from '#models/product'
 import StockTransaction from '#models/stock_transaction'
+import { getPaginationParams } from '#services/pagination'
 import { createProductValidator } from '#validators/create_product'
 import { updateProductValidator } from '#validators/update_product'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class ProductsController {
-  async index({ inertia }: HttpContext) {
-    const products = await Product.query().orderBy('name', 'asc')
+  async index({ inertia, request }: HttpContext) {
+    const search = request.input('search') as string | undefined
+    const { page, perPage } = getPaginationParams(request.input('page'), request.input('perPage'))
     const categories = await Category.query().orderBy('name', 'asc')
+    const query = Product.query()
 
-    return inertia.render('dashboard/master-data/products/index', { products, categories })
+    if (search) {
+      const matchingCategoryIds = categories
+        .filter((category) => category.name.toLowerCase().includes(search.toLowerCase()))
+        .map((category) => category.id)
+
+      query.where((builder) => {
+        builder
+          .whereILike('code', `%${search}%`)
+          .orWhereILike('name', `%${search}%`)
+          .orWhereILike('unit', `%${search}%`)
+          .orWhereILike('description', `%${search}%`)
+
+        if (matchingCategoryIds.length > 0) {
+          builder.orWhereIn('categoryId', matchingCategoryIds)
+        }
+      })
+    }
+
+    const products = await query.orderBy('name', 'asc').paginate(page, perPage)
+
+    return inertia.render('dashboard/master-data/products/index', {
+      products: {
+        data: products.all().map((product) => ({
+          id: product.id,
+          categoryId: product.categoryId,
+          code: product.code,
+          name: product.name,
+          unit: product.unit,
+          stock: product.stock,
+          minimumStock: product.minimumStock,
+          description: product.description,
+        })),
+        meta: products.getMeta(),
+      },
+      categories,
+      search,
+    })
   }
 
   async store({ request, response, session }: HttpContext) {
